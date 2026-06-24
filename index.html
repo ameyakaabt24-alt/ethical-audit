@@ -499,68 +499,152 @@
       };
     }
 
-    async function submitAudit() {
-      document.getElementById('form-area').style.display = 'none';
-      document.getElementById('loading-area').style.display = 'block';
-      const data = collect();
+   function submitAudit() {
 
-      const prompt = `You are an expert ethics auditor trained in Universal Human Values (UHV). An organization has filled out an ethical audit form across four pillars: Production, Process, Administration, and Service.
+  document.getElementById('form-area').style.display = 'none';
+  document.getElementById('loading-area').style.display = 'block';
 
-Analyze and return ONLY valid JSON (no markdown, no backticks, nothing outside the JSON).
+  const data = collect();
 
-Responses:
-PRODUCTION:
-- Sourcing & products: ${data.production.sourcing || 'not answered'}
-- Waste & environment: ${data.production.waste || 'not answered'}
-- Worker safety & dignity: ${data.production.safety || 'not answered'}
+  setTimeout(() => {
 
-PROCESS:
-- Roles & responsibilities: ${data.process.roles || 'not answered'}
-- Grievance mechanism: ${data.process.grievance || 'not answered'}
-- Quality standards: ${data.process.quality || 'not answered'}
+    function score(text) {
 
-ADMINISTRATION:
-- Decision transparency: ${data.administration.decisions || 'not answered'}
-- Pay equity: ${data.administration.payequity || 'not answered'}
-- Accountability: ${data.administration.accountability || 'not answered'}
+      let s = 5;
 
-SERVICE:
-- Complaint handling: ${data.service.complaints || 'not answered'}
-- Accessibility: ${data.service.accessibility || 'not answered'}
-- Community impact: ${data.service.community || 'not answered'}
+      text = text.toLowerCase();
 
-Return exactly this JSON:
-{
-  "scores": {
-    "production": <integer 1-10>,
-    "process": <integer 1-10>,
-    "administration": <integer 1-10>,
-    "service": <integer 1-10>
-  },
-  "overall": <integer 1-10>,
-  "overall_note": "<2 sentence summary of the organization's overall ethical standing>",
-  "suggestions": {
-    "production": ["<suggestion 1>", "<suggestion 2>", "<suggestion 3>"],
-    "process": ["<suggestion 1>", "<suggestion 2>", "<suggestion 3>"],
-    "administration": ["<suggestion 1>", "<suggestion 2>", "<suggestion 3>"],
-    "service": ["<suggestion 1>", "<suggestion 2>", "<suggestion 3>"]
-  }
-}`;
+      const positive = [
+        "safety",
+        "training",
+        "recycle",
+        "recycling",
+        "fair",
+        "transparent",
+        "community",
+        "accessibility",
+        "grievance",
+        "quality",
+        "audit",
+        "csr",
+        "environment",
+        "ppe",
+        "accountability"
+      ];
 
-      try {
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-6',
-            max_tokens: 1000,
-            messages: [{ role: 'user', content: prompt }]
-          })
-        });
-        const json = await res.json();
-        const text = json.content.map(b => b.text || '').join('').replace(/```json|```/g, '').trim();
-        const result = JSON.parse(text);
-        showResults(result);
+      const negative = [
+        "none",
+        "not",
+        "pending",
+        "inconsistent",
+        "informal",
+        "missing",
+        "poor"
+      ];
+
+      positive.forEach(k => {
+        if(text.includes(k)) s++;
+      });
+
+      negative.forEach(k => {
+        if(text.includes(k)) s--;
+      });
+
+      if(s > 10) s = 10;
+      if(s < 1) s = 1;
+
+      return s;
+    }
+
+    const productionScore =
+      score(
+        data.production.sourcing +
+        data.production.waste +
+        data.production.safety
+      );
+
+    const processScore =
+      score(
+        data.process.roles +
+        data.process.grievance +
+        data.process.quality
+      );
+
+    const administrationScore =
+      score(
+        data.administration.decisions +
+        data.administration.payequity +
+        data.administration.accountability
+      );
+
+    const serviceScore =
+      score(
+        data.service.complaints +
+        data.service.accessibility +
+        data.service.community
+      );
+
+    const overall =
+      Math.round(
+        (
+          productionScore +
+          processScore +
+          administrationScore +
+          serviceScore
+        ) / 4
+      );
+
+    const result = {
+
+      scores: {
+        production: productionScore,
+        process: processScore,
+        administration: administrationScore,
+        service: serviceScore
+      },
+
+      overall: overall,
+
+      overall_note:
+        overall >= 8
+          ? "The organization demonstrates strong ethical practices across most pillars."
+          : overall >= 6
+          ? "The organization shows moderate ethical performance with room for improvement."
+          : "The organization should strengthen several ethical practices to align with Universal Human Values.",
+
+      suggestions: {
+
+        production: [
+          "Improve sustainable sourcing practices",
+          "Reduce production waste through recycling",
+          "Conduct regular worker safety training"
+        ],
+
+        process: [
+          "Establish a formal grievance mechanism",
+          "Clearly document roles and responsibilities",
+          "Increase transparency in quality checks"
+        ],
+
+        administration: [
+          "Conduct periodic pay equity reviews",
+          "Improve transparency in decision making",
+          "Strengthen accountability mechanisms"
+        ],
+
+        service: [
+          "Improve accessibility for diverse users",
+          "Reduce complaint response times",
+          "Increase community engagement initiatives"
+        ]
+      }
+    };
+
+    showResults(result);
+
+  }, 2000);
+
+}
       } catch (e) {
         document.getElementById('loading-area').style.display = 'none';
         document.getElementById('form-area').style.display = 'block';
