@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ethical Organization Audit Tool</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f8f9fa;
+      --surface: #ffffff;
+      --border: rgba(0,0,0,0.1);
+      --border-strong: rgba(0,0,0,0.2);
+      --text: #111;
+      --text-muted: #666;
+      --text-faint: #999;
+      --green: #1D9E75;
+      --green-dark: #0F6E56;
+      --green-light: #E1F5EE;
+      --blue: #378ADD;
+      --blue-light: #E6F1FB;
+      --blue-dark: #185FA5;
+      --purple: #7F77DD;
+      --purple-light: #EEEDFE;
+      --purple-dark: #534AB7;
+      --coral: #D85A30;
+      --coral-light: #FAECE7;
+      --coral-dark: #712B13;
+      --radius: 10px;
+      --radius-lg: 14px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 620px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .site-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .site-header .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--green-dark);
+      background: var(--green-light);
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+    }
+    .site-header h1 {
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+    .site-header p {
+      font-size: 15px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* Card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Progress */
+    .progress-wrap {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 2rem;
+    }
+    .prog-seg {
+      height: 5px;
+      flex: 1;
+      border-radius: 3px;
+      background: #e0e0e0;
+      transition: background 0.3s;
+    }
+    .prog-seg.done { background: var(--green); }
+    .prog-seg.active { background: #5DCAA5; }
+
+    /* Pill */
+    .pill {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 12px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+      letter-spacing: 0.03em;
+    }
+    .pill-prod { background: var(--blue-light); color: var(--blue-dark); }
+    .pill-proc { background: var(--green-light); color: var(--green-dark); }
+    .pill-admin { background: var(--purple-light); color: var(--purple-dark); }
+    .pill-serv { background: var(--coral-light); color: var(--coral-dark); }
+
+    .step-title { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+    .step-desc { font-size: 14px; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5; }
+
+    /* Questions */
+    .q-block { margin-bottom: 1.25rem; }
+    .q-label { font-size: 14px; font-weight: 500; margin-bottom: 8px; line-height: 1.5; }
+    textarea {
+      width: 100%;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      background: #fafafa;
+      resize: vertical;
+      min-height: 76px;
+      line-height: 1.6;
+      transition: border-color 0.2s;
+    }
+    textarea:focus { outline: none; border-color: var(--green); background: #fff; }
+    textarea::placeholder { color: var(--text-faint); }
+
+    /* Buttons */
+    .nav { display: flex; gap: 10px; margin-top: 1.5rem; }
+    button {
+      cursor: pointer;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+      padding: 10px 22px;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      background: transparent;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    button:hover { background: #f0f0f0; }
+    button.primary {
+      background: var(--green);
+      border-color: var(--green);
+      color: #fff;
+    }
+    button.primary:hover { background: var(--green-dark); border-color: var(--green-dark); }
+
+    .error-msg {
+      background: #fff3f3;
+      border: 1px solid #f5c1c1;
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #a32d2d;
+      margin-top: 12px;
+      display: none;
+    }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 4rem 0;
+      display: none;
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid #e0e0e0;
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading p { font-size: 14px; color: var(--text-muted); }
+
+    /* Results */
+    .results { display: none; }
+
+    .overall-card {
+      background: var(--green);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 1.25rem;
+      color: #fff;
+    }
+    .overall-score { font-size: 56px; font-weight: 600; line-height: 1; }
+    .overall-label { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+    .overall-note { font-size: 14px; margin-top: 14px; opacity: 0.9; line-height: 1.6; }
+
+    .pillar-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 1.25rem;
+    }
+    .pillar-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+    }
+    .pillar-name { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; }
+    .pillar-score { font-size: 26px; font-weight: 600; }
+    .pillar-bar { height: 4px; background: #eee; border-radius: 2px; margin-top: 10px; overflow: hidden; }
+    .pillar-fill { height: 100%; border-radius: 2px; transition: width 1.2s ease; width: 0%; }
+
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .chart-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 1rem; }
+
+    .suggestions-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: 1.25rem;
+    }
+    .sug-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      font-size: 15px;
+      font-weight: 600;
+      background: #f8f9fa;
+    }
+    .sug-pillar { border-bottom: 1px solid var(--border); }
+    .sug-pillar:last-child { border-bottom: none; }
+    .sug-ptitle { padding: 12px 20px 0; }
+    .sug-list { list-style: none; padding: 6px 20px 14px; }
+    .sug-list li {
+      font-size: 13px;
+      color: var(--text);
+      padding: 5px 0 5px 18px;
+      position: relative;
+      line-height: 1.55;
+    }
+    .sug-list li::before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      color: var(--green);
+      font-size: 12px;
+    }
+
+    .footer-note {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-faint);
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+    }
+    .footer-note a { color: var(--text-faint); }
+    .restart-btn {
+      display: block;
+      margin: 0 auto;
+      border: 1px solid var(--border-strong);
+    }
+
+    @media (max-width: 480px) {
+      .pillar-grid { grid-template-columns: 1fr 1fr; }
+      .card { padding: 1.5rem; }
+      .site-header h1 { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div class="site-header">
+      <div class="badge">Universal Human Values</div>
+      <h1>Ethical Organization Audit</h1>
+      <p>Assess your organization's practices across the four pillars of Universal Human Values and get AI-powered improvement suggestions.</p>
+    </div>
+
+    <!-- FORM -->
+    <div id="form-area">
+      <div class="card">
+        <div class="progress-wrap">
+          <div class="prog-seg active" id="ps0"></div>
+          <div class="prog-seg" id="ps1"></div>
+          <div class="prog-seg" id="ps2"></div>
+          <div class="prog-seg" id="ps3"></div>
+        </div>
+        <div id="step-counter" style="font-size:12px;color:#999;margin-bottom:1.25rem">Step 1 of 4</div>
+
+        <!-- Step 0: Production -->
+        <div id="step-0">
+          <span class="pill pill-prod">Production</span>
+          <div class="step-title">Production practices</div>
+          <div class="step-desc">How your organization sources, creates, and delivers its products or outputs.</div>
+          <div class="q-block">
+            <div class="q-label">What does your organization produce and how do you source raw materials or inputs?</div>
+            <textarea id="p0q0" placeholder="e.g. We manufacture cotton garments; sourced from domestic suppliers with fair-trade agreements"></textarea>
+          </div>
+          <div class="q-block">
+            <div class="q-label">What steps do you take to reduce waste, pollution, or environmental harm during production?</div>
+            <textarea id="p0q1" placeholder="e.g. We reuse cutting scraps and have a basic effluent treatment setup"></textarea>
+          </div>
+          <div class="q-block">
+            <div class="q-label">Are worker health, safety, and dignity standards maintained in production areas?</div>
+            <textarea id="p0q2" placeholder="e.g. PPE is provided but compliance is inconsistent; injury reporting exists"></textarea>
+          </div>
+        </div>
+
+        <!-- Step 1: Process -->
+        <div id="step-1" style="display:none">
+          <span class="pill pill-proc">Process</span>
+          <div class="step-title">Process design</div>
+          <div class="step-desc">How workflows, roles, and responsibilities are structured inside the organization.</div>
+          <div class="q-block">
+            <div class="q-label">Are roles, responsibilities, and performance standards clearly defined and communicated?</div>
+            <textarea id="p1q0" placeholder="e.g. Job descriptions exist but are rarely updated or shared proactively"></textarea>
+          </div>
+          <div class="q-block">
+            <div class="q-label">Is there a formal mechanism for workers to raise grievances or suggest improvements?</div>
+            <textarea id="p1q1" placeholder="e.g. We have a suggestion box; formal grievance redressal is pending HR policy update"></textarea>
+          </div>
+          <div class="q-block">
+            <div class="q-label">How is quality controlled — and are standards fair and transparent to everyone involved?</div>
+            <textarea id="p1q2" placeholder="e.g. Quality checks happen at final stage only; criteria are mostly verbal"></textarea>
+          </div>
+        </div>
+
+        <!-- Step 2: Administration -->
+        <div id="step-2" style="display:none">
+          <span class="pill pill-admin">Administration</span>
+          <div class="step-title">Administration & governance</div>
+          <div class="step-desc">How decisions are made, communicated, and held accountable.</div>
+          <div class="q-block">
+            <div class="q-label">How are major decisions made — and are they communicated transparently to affected stakeholders?</div>
+            <textarea id="p2q0" placeholder="e.g. Decisions are made by leadership; updates shared via monthly all-hands meetings"></textarea>
+          </div>
+          <div class="q-block">
+            <div class="q-label">Is there pay equity — are compensation policies fair, documented, and free from discrimination?</div>
+            <textarea id="p2q1" placeholder="e.g. Pay ranges exist but gender pay gap has not been formally audited"></textarea>
+          </div>
+          <div class="q-block">
+            <div class="q-label">How does the organization ensure accountability when something goes wrong?</div>
+            <textarea id="p2q2" placeholder="e.g. An internal review process exists; external accountability mechanisms are informal"></textarea>
+          </div>
+        </div>
+
+        <!-- Step 3: Service -->
+        <div id="step-3" style="display:none">
+          <span class="pill pill-serv">Service</span>
+          <div class="step-title">Service delivery</div>
+          <div class="step-desc">How your organization treats the people it serves — customers, clients, or communities.</div>
+          <div class="q-block">
+            <div class="q-label">How does your organization handle customer or community complaints?</div>
+            <textarea id="p3q0" placeholder="e.g. Complaints handled via phone/email; response time is 3–5 days; no escalation path"></textarea>
+          </div>
+          <div class="q-block">
+            <div class="q-label">Is your service accessible to people from different economic, linguistic, or differently-abled backgrounds?</div>
+            <textarea id="p3q1" placeholder="e.g. Website not screen-reader compatible; no vernacular language support currently"></textarea>
+          </div>
+          <div class="q-block">
+            <div class="q-label">Does your organization give back to or consider the broader community it operates in?</div>
+            <textarea id="p3q2" placeholder="e.g. No formal CSR policy; some employees volunteer individually"></textarea>
+          </div>
+        </div>
+
+        <div class="nav">
+          <button id="btn-back" onclick="nav(-1)" style="display:none">← Back</button>
+          <button class="primary" id="btn-next" onclick="nav(1)">Next →</button>
+        </div>
+        <div class="error-msg" id="err-msg">Please fill in at least one answer before continuing.</div>
+      </div>
+    </div>
+
+    <!-- LOADING -->
+    <div class="loading" id="loading-area">
+      <div class="spinner"></div>
+      <p>Analyzing your organization's ethical practices...</p>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="results" id="results-area">
+      <div class="overall-card">
+        <div class="overall-score" id="overall-score">—</div>
+        <div class="overall-label">Overall ethics score out of 10</div>
+        <div class="overall-note" id="overall-note"></div>
+      </div>
+
+      <div class="pillar-grid">
+        <div class="pillar-card">
+          <div class="pillar-name">Production</div>
+          <div class="pillar-score" id="sc-prod" style="color:var(--blue-dark)">—</div>
+          <div class="pillar-bar"><div class="pillar-fill" id="bar-prod" style="background:var(--blue)"></div></div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-name">Process</div>
+          <div class="pillar-score" id="sc-proc" style="color:var(--green-dark)">—</div>
+          <div class="pillar-bar"><div class="pillar-fill" id="bar-proc" style="background:var(--green)"></div></div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-name">Administration</div>
+          <div class="pillar-score" id="sc-admin" style="color:var(--purple-dark)">—</div>
+          <div class="pillar-bar"><div class="pillar-fill" id="bar-admin" style="background:var(--purple)"></div></div>
+        </div>
+        <div class="pillar-card">
+          <div class="pillar-name">Service</div>
+          <div class="pillar-score" id="sc-serv" style="color:var(--coral-dark)">—</div>
+          <div class="pillar-bar"><div class="pillar-fill" id="bar-serv" style="background:var(--coral)"></div></div>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <h3>Score breakdown</h3>
+        <div style="position:relative;height:260px">
+          <canvas id="radarChart" role="img" aria-label="Radar chart showing ethics scores across four pillars"></canvas>
+        </div>
+      </div>
+
+      <div class="suggestions-card" id="suggestions-box"></div>
+
+      <div style="text-align:center;margin-top:1.5rem;margin-bottom:0.5rem">
+        <button class="restart-btn" onclick="restart()">Start a new audit</button>
+      </div>
+      <div class="footer-note">Built for Universal Human Values · RV College of Engineering · Powered by Claude AI</div>
+    </div>
+
+  </div>
+
+  <script>
+    let step = 0;
+    const steps = [
+      ['p0q0','p0q1','p0q2'],
+      ['p1q0','p1q1','p1q2'],
+      ['p2q0','p2q1','p2q2'],
+      ['p3q0','p3q1','p3q2']
+    ];
+
+    function nav(dir) {
+      const ids = steps[step];
+      const filled = ids.some(id => document.getElementById(id).value.trim().length > 0);
+      if (!filled && dir === 1) {
+        document.getElementById('err-msg').style.display = 'block';
+        return;
+      }
+      document.getElementById('err-msg').style.display = 'none';
+      document.getElementById('step-' + step).style.display = 'none';
+      document.getElementById('ps' + step).classList.remove('active');
+      document.getElementById('ps' + step).classList.add('done');
+      step += dir;
+      if (step < 0) step = 0;
+      if (step > 3) { submitAudit(); return; }
+      document.getElementById('step-' + step).style.display = 'block';
+      document.getElementById('ps' + step).classList.add('active');
+      document.getElementById('step-counter').textContent = 'Step ' + (step + 1) + ' of 4';
+      document.getElementById('btn-back').style.display = step > 0 ? 'inline-block' : 'none';
+      document.getElementById('btn-next').textContent = step === 3 ? 'Analyze →' : 'Next →';
+    }
+
+    function collect() {
+      return {
+        production: {
+          sourcing: document.getElementById('p0q0').value,
+          waste: document.getElementById('p0q1').value,
+          safety: document.getElementById('p0q2').value
+        },
+        process: {
+          roles: document.getElementById('p1q0').value,
+          grievance: document.getElementById('p1q1').value,
+          quality: document.getElementById('p1q2').value
+        },
+        administration: {
+          decisions: document.getElementById('p2q0').value,
+          payequity: document.getElementById('p2q1').value,
+          accountability: document.getElementById('p2q2').value
+        },
+        service: {
+          complaints: document.getElementById('p3q0').value,
+          accessibility: document.getElementById('p3q1').value,
+          community: document.getElementById('p3q2').value
+        }
+      };
+    }
+
+    async function submitAudit() {
+      document.getElementById('form-area').style.display = 'none';
+      document.getElementById('loading-area').style.display = 'block';
+      const data = collect();
+
+      const prompt = `You are an expert ethics auditor trained in Universal Human Values (UHV). An organization has filled out an ethical audit form across four pillars: Production, Process, Administration, and Service.
+
+Analyze and return ONLY valid JSON (no markdown, no backticks, nothing outside the JSON).
+
+Responses:
+PRODUCTION:
+- Sourcing & products: ${data.production.sourcing || 'not answered'}
+- Waste & environment: ${data.production.waste || 'not answered'}
+- Worker safety & dignity: ${data.production.safety || 'not answered'}
+
+PROCESS:
+- Roles & responsibilities: ${data.process.roles || 'not answered'}
+- Grievance mechanism: ${data.process.grievance || 'not answered'}
+- Quality standards: ${data.process.quality || 'not answered'}
+
+ADMINISTRATION:
+- Decision transparency: ${data.administration.decisions || 'not answered'}
+- Pay equity: ${data.administration.payequity || 'not answered'}
+- Accountability: ${data.administration.accountability || 'not answered'}
+
+SERVICE:
+- Complaint handling: ${data.service.complaints || 'not answered'}
+- Accessibility: ${data.service.accessibility || 'not answered'}
+- Community impact: ${data.service.community || 'not answered'}
+
+Return exactly this JSON:
+{
+  "scores": {
+    "production": <integer 1-10>,
+    "process": <integer 1-10>,
+    "administration": <integer 1-10>,
+    "service": <integer 1-10>
+  },
+  "overall": <integer 1-10>,
+  "overall_note": "<2 sentence summary of the organization's overall ethical standing>",
+  "suggestions": {
+    "production": ["<suggestion 1>", "<suggestion 2>", "<suggestion 3>"],
+    "process": ["<suggestion 1>", "<suggestion 2>", "<suggestion 3>"],
+    "administration": ["<suggestion 1>", "<suggestion 2>", "<suggestion 3>"],
+    "service": ["<suggestion 1>", "<suggestion 2>", "<suggestion 3>"]
+  }
+}`;
+
+      try {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 1000,
+            messages: [{ role: 'user', content: prompt }]
+          })
+        });
+        const json = await res.json();
+        const text = json.content.map(b => b.text || '').join('').replace(/```json|```/g, '').trim();
+        const result = JSON.parse(text);
+        showResults(result);
+      } catch (e) {
+        document.getElementById('loading-area').style.display = 'none';
+        document.getElementById('form-area').style.display = 'block';
+        document.getElementById('err-msg').textContent = 'Something went wrong. Please try again.';
+        document.getElementById('err-msg').style.display = 'block';
+      }
+    }
+
+    function showResults(r) {
+      document.getElementById('loading-area').style.display = 'none';
+      document.getElementById('results-area').style.display = 'block';
+      document.getElementById('overall-score').textContent = r.overall + '/10';
+      document.getElementById('overall-note').textContent = r.overall_note;
+
+      const s = r.scores;
+      const map = [
+        ['prod', 'production', '#378ADD'],
+        ['proc', 'process', '#1D9E75'],
+        ['admin', 'administration', '#7F77DD'],
+        ['serv', 'service', '#D85A30']
+      ];
+      map.forEach(([k, key, col]) => {
+        document.getElementById('sc-' + k).textContent = s[key] + '/10';
+        setTimeout(() => {
+          document.getElementById('bar-' + k).style.width = (s[key] * 10) + '%';
+        }, 100);
+      });
+
+      new Chart(document.getElementById('radarChart'), {
+        type: 'radar',
+        data: {
+          labels: ['Production', 'Process', 'Administration', 'Service'],
+          datasets: [{
+            label: 'Ethics score',
+            data: [s.production, s.process, s.administration, s.service],
+            borderColor: '#1D9E75',
+            backgroundColor: 'rgba(29,158,117,0.12)',
+            pointBackgroundColor: '#1D9E75',
+            borderWidth: 2,
+            pointRadius: 5
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            r: {
+              min: 0, max: 10,
+              ticks: { stepSize: 2, color: '#999', font: { size: 11 } },
+              grid: { color: 'rgba(0,0,0,0.07)' },
+              pointLabels: { color: '#555', font: { size: 13, weight: '500' } }
+            }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+
+      const pillars = [
+        { key: 'production', label: 'Production', cls: 'pill-prod' },
+        { key: 'process', label: 'Process', cls: 'pill-proc' },
+        { key: 'administration', label: 'Administration', cls: 'pill-admin' },
+        { key: 'service', label: 'Service', cls: 'pill-serv' }
+      ];
+      let html = '<div class="sug-header">Improvement suggestions</div>';
+      pillars.forEach(p => {
+        const items = r.suggestions[p.key] || [];
+        html += `<div class="sug-pillar">
+          <div class="sug-ptitle"><span class="pill ${p.cls}">${p.label}</span></div>
+          <ul class="sug-list">${items.map(s => `<li>${s}</li>`).join('')}</ul>
+        </div>`;
+      });
+      document.getElementById('suggestions-box').innerHTML = html;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function restart() {
+      step = 0;
+      steps.flat().forEach(id => document.getElementById(id).value = '');
+      document.getElementById('results-area').style.display = 'none';
+      document.getElementById('form-area').style.display = 'block';
+      for (let i = 0; i < 4; i++) {
+        document.getElementById('step-' + i).style.display = i === 0 ? 'block' : 'none';
+        const seg = document.getElementById('ps' + i);
+        seg.classList.remove('done', 'active');
+        if (i === 0) seg.classList.add('active');
+      }
+      document.getElementById('btn-back').style.display = 'none';
+      document.getElementById('btn-next').textContent = 'Next →';
+      document.getElementById('step-counter').textContent = 'Step 1 of 4';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  </script>
+</body>
+</html>
